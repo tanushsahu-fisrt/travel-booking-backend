@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mysql
+      - mongo
+      - rabbitmq
+      - elasticsearch
+    environment:
+      - MYSQL_HOST=mysql
+      - MONGO_URL=mongodb://mongo:27017/logs
+      - RABBITMQ_URL=amqp://rabbitmq
+      - ELASTIC_URL=http://elasticsearch:9200
+      # other env vars like SMTP, JWT_SECRET etc
+
+  mysql:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: travel
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'  # management UI
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - '9200:9200'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+
+volumes:
+  mysql-data:
+  mongo-data:
